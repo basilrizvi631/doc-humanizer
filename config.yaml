@@ -1,0 +1,31 @@
+# ZeroGPT API wiring. Check these against the API docs in your ZeroGPT dashboard (zerogpt.com -> API).
+# The app's "Test API" button shows the raw responses so you can confirm them before a full run.
+api:
+  auth_header: ApiKey                     # header that carries your key
+  # --- detector (scores text, returns % AI) ---
+  detect_url: https://api.zerogpt.com/api/detect/detectText
+  detect_payload: {"input_text": "{text}"}
+  detect_score_path: ""                   # e.g. data.fakePercentage ; empty = auto-find
+  # --- humanizer (rewrites text) ---
+  humanize_url: https://api.zerogpt.com/api/transform/humanize
+  humanize_payload: {"string": "{text}"}  # "{text}" is replaced with each paragraph
+  humanize_result_path: ""                # e.g. data.message ; empty = auto-detect the rewritten text
+  timeout: 120
+
+run:
+  target: 0.10          # stop once ZeroGPT says <= 10% AI
+  max_attempts: 3       # humanize calls per paragraph per pass
+  passes: 2             # extra document passes over paragraphs still flagged
+  verify: true          # check each rewrite with the ZeroGPT detector
+  skip_human: true      # don't spend credits on paragraphs that already score as human
+  min_words: 25         # shorter blocks (titles, headings, captions, bullets) are left as they are
+  workers: 3            # paragraphs processed in parallel
+
+# toHuman (tohuman.io) API
+tohuman:
+  url: https://tohuman.io/api/v1/humanizations
+  intensity: medium      # minimal | medium | heavy
+  words_per_key: 2400    # each API key handles at most this many words, then the next key takes over
+  result_path: ""        # e.g. data.humanized_content ; empty = auto-detect
+  poll_timeout: 180      # seconds to wait if the API processes jobs asynchronously
+  timeout: 120
